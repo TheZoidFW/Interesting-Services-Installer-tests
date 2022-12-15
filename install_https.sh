@@ -1,33 +1,43 @@
 #!/bin/bash
-sudo apt update
-sudo apt install apache2
-sudo a2enmod ssl
-sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/localhost.key -out /etc/ssl/certs/localhost.crt
-sudo nano /etc/apache2/sites-available/default-ssl.conf
-<IfModule mod_ssl.c>
-    <VirtualHost _default_:443>
-        ServerAdmin webmaster@localhost
-        ServerName localhost
-        DocumentRoot /var/www/html
 
-        ErrorLog ${APACHE_LOG_DIR}/error.log
-        CustomLog ${APACHE_LOG_DIR}/access.log combined
+# actualizar el sistema
+apt-get update
 
-        SSLEngine on
-        SSLCertificateFile /etc/ssl/certs/localhost.crt
-        SSLCertificateKeyFile /etc/ssl/private/localhost.key
+# instalar Apache
+apt-get install apache2
 
-        <FilesMatch "\.(cgi|shtml|phtml|php)$">
-            SSLOptions +StdEnvVars
-        </FilesMatch>
-        <Directory /usr/lib/cgi-bin>
-            SSLOptions +StdEnvVars
-        </Directory>
+# habilitar el módulo SSL de Apache
+a2enmod ssl
 
-        BrowserMatch "MSIE [2-6]" \
-            nokeepalive ssl-unclean-shutdown \
-            downgrade-1.0 force-response-1.0
-        BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
-    </VirtualHost>
-</IfModule>
-sudo a2ensite default-ssl.conf
+# crear un directorio para almacenar los certificados SSL
+mkdir /etc/apache2/ssl
+
+# generar los certificados SSL
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/apache2/ssl/apache.key -out /etc/apache2/ssl/apache.crt
+
+# editar el archivo de configuración de Apache
+nano /etc/apache2/sites-available/default-ssl.conf
+
+# agregar las siguientes líneas al archivo de configuración, reemplazando "your_domain.com" por el nombre de tu dominio:
+<VirtualHost _default_:443>
+    ServerAdmin webmaster@localhost
+    ServerName kokodlocal.ddns.net
+    DocumentRoot /var/www/html
+
+    # habilitar SSL
+    SSLEngine on
+    SSLCertificateFile /etc/apache2/ssl/apache.crt
+    SSLCertificateKeyFile /etc/apache2/ssl/apache.key
+
+    # configurar el log de acceso
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+
+# guardar y cerrar el archivo
+
+# habilitar el sitio default-ssl
+a2ensite default-ssl
+
+# reiniciar Apache
+service apache2 restart
